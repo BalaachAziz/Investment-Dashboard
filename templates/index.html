@@ -1,63 +1,215 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Investment Growth Simulator</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<title>AI-Assisted Investment Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    /* DARK THEME BODY */
+    body {
+        background-color: #121212;
+        color: #e0e0e0;
+        font-family: 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* CENTER CONTENT */
+    .container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+
+    /* CARD STYLE FOR INPUTS */
+    .card {
+        background-color: #1e1e1e;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        margin-bottom: 2rem;
+    }
+
+    input {
+        width: 100%;
+        padding: 0.5rem;
+        margin: 0.5rem 0 1rem 0;
+        border-radius: 6px;
+        border: none;
+        background-color: #2c2c2c;
+        color: #fff;
+        font-size: 1rem;
+    }
+
+    label {
+        font-weight: bold;
+    }
+
+    button {
+        background-color: #4caf50;
+        color: white;
+        padding: 0.8rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        background-color: #45a049;
+    }
+
+    h1, h2 {
+        text-align: center;
+    }
+
+    .stats {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background-color: #1e1e1e;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        margin: 1rem;
+        flex: 1 1 200px;
+        text-align: center;
+    }
+
+    canvas {
+        background-color: #1e1e1e;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+</style>
 </head>
 <body>
 
-<h1>Investment Growth Simulator</h1>
+<div class="container">
+    <h1>AI-Assisted Investment Dashboard</h1>
 
-<form method="POST">
-    <label>Starting Investment:</label><br>
-    <input name="principal" required><br><br>
+    <div class="card">
+        <form method="POST">
+            <label>Starting Investment ($)</label>
+            <input name="principal" type="number" required>
 
-    <label>Monthly Contribution:</label><br>
-    <input name="monthly" required><br><br>
+            <label>Monthly Contribution ($)</label>
+            <input name="monthly" type="number" required>
 
-    <label>Annual Return (%):</label><br>
-    <input name="rate" required><br><br>
+            <label>Expected Annual Return (%)</label>
+            <input name="rate" type="number" step="0.01" required>
 
-    <label>Years:</label><br>
-    <input name="years" required><br><br>
+            <label>Investment Period (Years)</label>
+            <input name="years" type="number" step="0.1" required>
 
-    <button type="submit">Calculate</button>
-</form>
+            <button type="submit">Calculate</button>
+        </form>
+    </div>
 
-{% if balances %}
-    <h2>Projected Portfolio Value: ${{ balances[-1] }}</h2>
-    
-    <!-- Chart -->
-    <canvas id="growthChart" width="600" height="400"></canvas>
+    {% if balances %}
+    <!-- STAT CARDS -->
+    <div class="stats">
+        <div class="stat-card">
+            <h3>Final Portfolio Value</h3>
+            <p>${{ balances[-1] }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Contributions</h3>
+            <p>${{ (principal + monthly * years*12)|round(2) }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Interest Earned</h3>
+            <p>${{ (balances[-1] - (principal + monthly * years*12))|round(2) }}</p>
+        </div>
+    </div>
+
+    <!-- LINE CHART -->
+    <canvas id="growthChart" width="800" height="400"></canvas>
+
+    <!-- OPTIONAL: BAR CHART COMPARISON -->
+    <canvas id="comparisonChart" width="800" height="400" style="margin-top:2rem;"></canvas>
+
     <script>
-        const ctx = document.getElementById('growthChart').getContext('2d');
-        const balances = {{ balances | safe }};  // Inject Python list into JS
-        const labels = balances.map((_, i) => i + 1);  // Month numbers
+        const balances = {{ balances | safe }};
+        const months = balances.map((_, i) => i+1);
 
+        // LINE CHART - Growth Over Time
+        const ctx = document.getElementById('growthChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: months,
                 datasets: [{
-                    label: 'Portfolio Growth Over Time',
+                    label: 'Portfolio Value Over Time',
                     data: balances,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.2
+                    borderColor: '#4caf50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 0
                 }]
             },
             options: {
-                scales: {
-                    x: {
-                        title: { display: true, text: 'Month' }
+                responsive: true,
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
                     },
-                    y: {
-                        title: { display: true, text: 'Balance ($)' }
+                    legend: {
+                        labels: {
+                            color: '#fff'
+                        }
+                    }
+                },
+                scales: {
+                    x: { 
+                        ticks: { color: '#fff' },
+                        title: { display: true, text: 'Month', color: '#fff' }
+                    },
+                    y: { 
+                        ticks: { color: '#fff' },
+                        title: { display: true, text: 'Value ($)', color: '#fff' }
                     }
                 }
             }
         });
-    </script>
-{% endif %}
 
+        // BAR CHART - Contributions vs Interest
+        const totalContributions = {{ (principal + monthly*years*12)|round(2) }};
+        const totalInterest = {{ (balances[-1] - (principal + monthly*years*12))|round(2) }};
+        const ctx2 = document.getElementById('comparisonChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['Contributions', 'Interest'],
+                datasets: [{
+                    label: 'Amount ($)',
+                    data: [totalContributions, totalInterest],
+                    backgroundColor: ['#2196f3', '#ff9800']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    y: { ticks: { color: '#fff' } },
+                    x: { ticks: { color: '#fff' } }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+</div>
 </body>
 </html>
+
+
