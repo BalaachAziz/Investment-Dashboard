@@ -31,4 +31,6 @@ def index():
     return render_template("index.html", balances=balances)
 
 
-app.run(port=5004)
+if __name__ == "__main__":
+    app.run()
+
