@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Investment Growth Simulator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<h1>Investment Growth Simulator</h1>
+
+<form method="POST">
+    <label>Starting Investment:</label><br>
+    <input name="principal" required><br><br>
+
+    <label>Monthly Contribution:</label><br>
+    <input name="monthly" required><br><br>
+
+    <label>Annual Return (%):</label><br>
+    <input name="rate" required><br><br>
+
+    <label>Years:</label><br>
+    <input name="years" required><br><br>
+
+    <button type="submit">Calculate</button>
+</form>
+
+{% if balances %}
+    <h2>Projected Portfolio Value: ${{ balances[-1] }}</h2>
+    
+    <!-- Chart -->
+    <canvas id="growthChart" width="600" height="400"></canvas>
+    <script>
+        const ctx = document.getElementById('growthChart').getContext('2d');
+        const balances = {{ balances | safe }};  // Inject Python list into JS
+        const labels = balances.map((_, i) => i + 1);  // Month numbers
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Portfolio Growth Over Time',
+                    data: balances,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.2
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Month' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Balance ($)' }
+                    }
+                }
+            }
+        });
+    </script>
+{% endif %}
+
+</body>
+</html>
